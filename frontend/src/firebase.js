@@ -24,3 +24,43 @@ const db = getFirestore(app);// <-- Inicializar Firestore
 const getUserName = () => auth.currentUser?.displayName || "Usuario";
 export { auth, db, getUserName,updateProfile};
 
+
+
+// Función para agregar una nota
+const addNote = async (text) => {
+  if (!auth.currentUser) return;
+
+  await addDoc(collection(db, "users", auth.currentUser.uid, "notes"), {
+    text,
+    createdAt: new Date()
+  });
+};
+
+// Función para obtener notas en tiempo real
+const getNotes = (callback) => {
+  if (!auth.currentUser) return;
+
+  const q = query(collection(db, "users", auth.currentUser.uid, "notes"));
+  return onSnapshot(q, (snapshot) => {
+    const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(notes);
+  });
+};
+
+//  Función para editar una nota
+const updateNote = async (noteId, newText) => {
+  if (!auth.currentUser) return;
+
+  const noteRef = doc(db, "users", auth.currentUser.uid, "notes", noteId);
+  await updateDoc(noteRef, { text: newText });
+};
+
+// Función para eliminar una nota
+const deleteNote = async (noteId) => {
+  if (!auth.currentUser) return;
+
+  const noteRef = doc(db, "users", auth.currentUser.uid, "notes", noteId);
+  await deleteDoc(noteRef);
+};
+
+export { addNote, getNotes, updateNote, deleteNote };

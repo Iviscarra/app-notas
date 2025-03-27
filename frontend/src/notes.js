@@ -1,76 +1,93 @@
-// src/Notes.js
 import { useState, useEffect } from "react";
-import { db, auth } from "./firebase";
-import { collection, addDoc, query, onSnapshot, where } from "firebase/firestore";
 import { addNote, getNotes, updateNote, deleteNote } from "./firebase";
 
 const Notes = () => {
-  const [note, setNote] = useState("");
   const [notes, setNotes] = useState([]);
-  const [search,setSearch] = useState("");//Estado para la busqueda
+  const [text, setText] = useState("");
+  const [editNoteId, setEditNoteId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [search, setSearch] = useState(""); // Estado para la búsqueda
 
-  // Función para agregar una nota a Firestore
+  
+
+  useEffect(() => {
+    const unsubscribe = getNotes(setNotes);
+    return () => unsubscribe && unsubscribe();
+  }, []);
+
   const handleAddNote = async () => {
-    if (note.trim() === "") return alert("Escribe algo antes de guardar.");
-    
-    try {
-      await addDoc(collection(db, "notas"), {
-        text: note,
-        userId: auth.currentUser.uid,
-        createdAt: new Date()
-      });
-      setNote("");
-    } catch (error) {
-      alert("Error al guardar la nota: " + error.message);
+    if (text.trim()) {
+      await addNote(text);
+      setText("");
     }
   };
 
-  // Cargar notas en tiempo real del usuario autenticado
-  useEffect(() => {
-    if (!auth.currentUser) return;
+  const handleEditNote = async () => {
+    if (editText.trim() && editNoteId) {
+      await updateNote(editNoteId, editText);
+      setEditNoteId(null);
+      setEditText("");
+    }
+  };
+
+    // Filtrar notas según la búsqueda
+    const filteredNotes = notes.filter(n =>
+        n.text.toLowerCase().includes(search.toLowerCase())
+      );
     
-    const q = query(collection(db, "notas"), where("userId", "==", auth.currentUser.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setNotes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  //filtrar notas segun la busqueda
-
-  const filteredNotes = notes.filter(n =>
-    n.text.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div>
-      <h2>Notas</h2>
-        <h1></h1>
-    {/* Input de búsqueda */}
-        <input 
-            type="text"
-            placeholder="Buscar nota..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+      <h2>📌 Tus Notas</h2>
+
+            {/* Input de búsqueda */}
+            <input 
+        type="text"
+        placeholder="Buscar nota..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
       />
 
+      {/* Input para agregar nuevas notas */}
       <input 
         type="text" 
-        placeholder="Escribe una nota" 
-        value={note} 
-        onChange={(e) => setNote(e.target.value)} 
+        placeholder="Escribe una nota..."
+        value={text} 
+        onChange={(e) => setText(e.target.value)}
       />
       <button onClick={handleAddNote}>Agregar Nota</button>
 
+      {/* Lista de notas */}
       <ul>
-        {filteredNotes.map(n => (
-          <li key={n.id}>{n.text}</li>
+        {filteredNotes.map(note => (
+          <li key={note.id}>
+            {editNoteId === note.id ? (
+              <>
+                <input 
+                  type="text" 
+                  value={editText} 
+                  onChange={(e) => setEditText(e.target.value)}
+                />
+                <button onClick={handleEditNote}>Guardar</button>
+                <button onClick={() => setEditNoteId(null)}>Cancelar</button>
+              </>
+            ) : (
+              <>
+                {note.text}
+                <button onClick={() => {
+                  setEditNoteId(note.id);
+                  setEditText(note.text);
+                }}>✏️ Editar</button>
+                <button onClick={() => deleteNote(note.id)}>🗑 Eliminar</button>
+              </>
+            )}
+          </li>
         ))}
+
       </ul>
+
+
     </div>
   );
 };
 
 export default Notes;
-
