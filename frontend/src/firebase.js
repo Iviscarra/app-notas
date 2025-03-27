@@ -1,7 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, updateProfile } from "firebase/auth";
 import { getFirestore } from "firebase/firestore"; // <-- Importar Firestore
+import {collection, addDoc, onSnapshot, query, updateDoc, deleteDoc, doc } from "firebase/firestore";
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyBU5bs8qILp627b4FFqSnF9N2-KLb9l6hk",
@@ -17,5 +19,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);// <-- Inicializar Firestore
-export { auth, db };
+
+// Función para obtener el nombre del usuario
+const getUserName = () => auth.currentUser?.displayName || "Usuario";
+export { auth, db, getUserName,updateProfile};
 

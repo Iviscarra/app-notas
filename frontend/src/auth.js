@@ -1,19 +1,22 @@
 // src/Auth.js
 import { useState } from "react";
 import { auth } from "./firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,updateProfile } from "firebase/auth";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegister, setIsRegister] = useState(true);
+  const [userName, setUserName] = useState(""); // Cambio de "name" a "userName"
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (isRegister) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Usuario registrado exitosamente");
+       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Actualizar perfil con nombre de usuario
+        await updateProfile(userCredential.user, { displayName: userName });
+        alert("Usuario registrado exitosamente"+ userName);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         alert("Inicio de sesión exitoso");
@@ -56,6 +59,12 @@ const Auth = () => {
     <div>
       <h2>{isRegister ? "Registro" : "Iniciar Sesión"}</h2>
       <form onSubmit={handleSubmit}>
+      <input 
+        type="text" 
+        placeholder="Nombre de usuario"
+        value={userName} 
+        onChange={(e) => setUserName(e.target.value)} 
+      />
         <input
           type="email"
           placeholder="Correo"

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "./firebase";
 import { collection, addDoc, query, onSnapshot, where } from "firebase/firestore";
+import { addNote, getNotes, updateNote, deleteNote } from "./firebase";
 
 const Notes = () => {
   const [note, setNote] = useState("");
@@ -45,6 +46,7 @@ const Notes = () => {
   return (
     <div>
       <h2>Notas</h2>
+        <h1></h1>
     {/* Input de búsqueda */}
         <input 
             type="text"
@@ -52,8 +54,6 @@ const Notes = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
       />
-
-
 
       <input 
         type="text" 
@@ -73,3 +73,4 @@ const Notes = () => {
 };
 
 export default Notes;
+
