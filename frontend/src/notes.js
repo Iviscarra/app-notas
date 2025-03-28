@@ -12,7 +12,9 @@ const Notes = () => {
   const [editText, setEditText] = useState("");
   const [editCategory, setEditCategory] = useState ("");
  
-  const [search, setSearch] = useState(""); // Estado para la búsqueda
+  const [search, setSearch] = useState(""); // Estado para la búsqueda de texto
+
+  const [searchCategory, setSearchCategory] = useState(""); //estado para la busqueda de categoria
 
   
 
@@ -41,13 +43,20 @@ const Notes = () => {
 
     // Filtrar notas según la búsqueda
     const filteredNotes = notes.filter(n =>
-        n.text.toLowerCase().includes(search.toLowerCase())
+        n.text.toLowerCase().includes(search.toLowerCase()) &&
+        n.category.toLowerCase().includes(searchCategory.toLowerCase())
       );
     
   return (
     <div>
       <h2>📌 Tus Notas</h2>
-        <label>Buscar notas: </label>
+      <select value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)}>
+        <option value="">Todas las categorías</option>
+        {categories.map(cat => (
+        <option key={cat} value={cat}>{cat}</option>
+  ))}
+</select>
+        <label>Buscar notas de texto: </label>
         {/* Input de búsqueda */}
         <input 
             type="text"
@@ -57,7 +66,7 @@ const Notes = () => {
       />
 
       {/* Input para agregar nuevas notas */}
-      <label> Agregar nota: </label>
+      <label>  Agregar nota: </label>
       <input 
         type="text" 
         placeholder="Escribe una nota..."
