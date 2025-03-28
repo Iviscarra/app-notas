@@ -27,11 +27,13 @@ export { auth, db, getUserName,updateProfile};
 
 
 // Función para agregar una nota
-const addNote = async (text) => {
+const addNote = async (text, category) => {
   if (!auth.currentUser) return;
+  console.log("📤 Enviando a Firestore:", text, "Categoría:", category); // 🔍 Verificar en consola
 
   await addDoc(collection(db, "users", auth.currentUser.uid, "notes"), {
     text,
+    category: category || "otros", // Si `category` está vacío, usa "Otro"
     createdAt: new Date()
   });
 };
@@ -48,11 +50,11 @@ const getNotes = (callback) => {
 };
 
 //  Función para editar una nota
-const updateNote = async (noteId, newText) => {
+const updateNote = async (noteId, newText,newCategory) => {
   if (!auth.currentUser) return;
 
   const noteRef = doc(db, "users", auth.currentUser.uid, "notes", noteId);
-  await updateDoc(noteRef, { text: newText });
+  await updateDoc(noteRef, { text: newText, category: newCategory });
 };
 
 // Función para eliminar una nota
