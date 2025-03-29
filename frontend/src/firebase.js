@@ -34,6 +34,7 @@ const addNote = async (text, category) => {
   await addDoc(collection(db, "users", auth.currentUser.uid, "notes"), {
     text,
     category: category || "otros", // Si `category` está vacío, usa "Otro"
+    isFavorite : false,
     createdAt: new Date()
   });
 };
@@ -65,4 +66,11 @@ const deleteNote = async (noteId) => {
   await deleteDoc(noteRef);
 };
 
-export { addNote, getNotes, updateNote, deleteNote };
+//funcion para cambiar el estado de favorito
+const toggleFavorite = async (id,currentStatus) => {
+  await updateDoc(doc(db,"users",auth.currentUser.uid,"notes",id),{
+    isFavorite:!currentStatus
+  });
+};
+
+export { addNote, getNotes, updateNote, deleteNote,toggleFavorite };

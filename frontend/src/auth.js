@@ -72,6 +72,7 @@ const Auth = () => {
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
+        
           type="password"
           placeholder="Contraseña"
           value={password}

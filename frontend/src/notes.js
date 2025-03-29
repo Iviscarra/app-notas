@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { addNote, getNotes, updateNote, deleteNote } from "./firebase";
-
+import { addNote, getNotes, updateNote, deleteNote,toggleFavorite } from "./firebase";
 const categories = ["Trabajo", "personal", "Ideas", "Urgente", "Otros"];
 
 const Notes = () => {
@@ -15,9 +14,10 @@ const Notes = () => {
   const [search, setSearch] = useState(""); // Estado para la búsqueda de texto
 
   const [searchCategory, setSearchCategory] = useState(""); //estado para la busqueda de categoria
+  const [showFavorites, setShowFavorites] = useState(false);
+
 
   
-
   useEffect(() => {
     const unsubscribe = getNotes(setNotes);
     return () => unsubscribe && unsubscribe();
@@ -42,18 +42,29 @@ const Notes = () => {
   };
 
     // Filtrar notas según la búsqueda
-    const filteredNotes = notes.filter(n =>
-        n.text.toLowerCase().includes(search.toLowerCase()) &&
-        n.category.toLowerCase().includes(searchCategory.toLowerCase())
-      );
-    
+    const filteredNotes = notes
+    .filter(n =>
+      n.text.toLowerCase().includes(search.toLowerCase()) &&
+      n.category.toLowerCase().includes(searchCategory.toLowerCase())
+    )
+    .filter(n => (showFavorites ? n.isFavorite : true))// Aplica el filtro solo si está activado
+    .sort((a, b) => {
+        if(b.isFavorite !== a.isFavorite) return b.isFavorite - a.isFavorite;
+    return a.text.localeCompare(b.text)
+    })
   return (
     <div>
       <h2>📌 Tus Notas</h2>
+      <button  onClick = {() => setShowFavorites(!showFavorites)}>
+        {showFavorites ? "📄 Mostrar Toda " : "⭐ Mostrar Favoritas "}
+        </button>
+
       <select value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)}>
         <option value="">Todas las categorías</option>
         {categories.map(cat => (
         <option key={cat} value={cat}>{cat}</option>
+
+        
   ))}
 </select>
         <label>Buscar notas de texto: </label>
@@ -73,6 +84,7 @@ const Notes = () => {
         value={text} 
         onChange={(e) => setText(e.target.value)}
       />
+      
 
 <label> Categoria: </label>
 <select 
@@ -84,14 +96,19 @@ const Notes = () => {
 >
   {categories.map(cat => (
     <option key={cat} value={cat}>{cat}</option>
+    
   ))}
 </select>
       <button onClick={handleAddNote}>Agregar Nota</button>
       <button onClick={() => setEditNoteId(null)}>Cancelar</button>
       {/* Lista de notas */}
       <ul>
+        
         {filteredNotes.map(note => (
-          <li key={note.id}>
+            <li key={note.id}>
+            <button onClick={() => toggleFavorite(note.id, note.isFavorite)}>
+                {note.isFavorite ? "⭐" : "☆"}
+            </button>
             {editNoteId === note.id ? (
               <>
                 <input 
@@ -99,7 +116,6 @@ const Notes = () => {
                   value={editText} 
                   onChange={(e) => setEditText(e.target.value)}
                 />
-
                 <trong> Categora:</trong>
             <select //editar categoria
                 value={editCategory} 
@@ -125,6 +141,7 @@ const Notes = () => {
             )}
           </li>
         ))}
+    
 
       </ul>
 
