@@ -1,37 +1,57 @@
-// src/App.js
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Auth from "../src/auth";
 import Notes from "./notes";
-import { auth,getUserName } from "./firebase";
-
-
+import { auth } from "./firebase";
+import Header from "./components/Header";
+import SearchBar from "./components/SearchBar";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [userName, setUserName] = useState("");
+  const [user] = useAuthState(auth);
+
+  const [search, setSearch] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleTheme = () => setDarkMode(!darkMode);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setUserName(user ? getUserName() : ""); // Obtener el nombre del usuario
-    });
-
-    return () => unsubscribe();
-  }, []);
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   return (
-    <div>
-      <h1>Mi App de Notas</h1>
-      
-      {user ? (
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
+      {user && (
         <>
-          <h2>Bienvenido, {userName} 👋</h2>
-          <Notes />
-          <button onClick={() => auth.signOut()}>Cerrar Sesión</button>
+          <main className="max-w-4xl w-full mx-auto">
+            <Header user={user} toggleTheme={toggleTheme} darkMode={darkMode} />
+          </main>
+
+          <main className="max-w-4xl w-full mx-auto">
+            <SearchBar
+              search={search}
+              setSearch={setSearch}
+              searchCategory={searchCategory}
+              setSearchCategory={setSearchCategory}
+              showFavorites={showFavorites}
+              setShowFavorites={setShowFavorites}
+            />
+          </main>
         </>
-      ) : (
-        <Auth />
       )}
+
+      <main className="flex-1 max-w-4xl w-full mx-auto">
+        {user ? (
+          <Notes
+            search={search}
+            searchCategory={searchCategory}
+            showFavorites={showFavorites}
+          />
+        ) : (
+          <Auth />
+        )}
+      </main>
     </div>
   );
 }

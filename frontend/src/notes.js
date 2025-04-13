@@ -1,151 +1,106 @@
 import { useState, useEffect } from "react";
-import { addNote, getNotes, updateNote, deleteNote,toggleFavorite } from "./firebase";
-const categories = ["Trabajo", "personal", "Ideas", "Urgente", "Otros"];
+import { getNotes, updateNote, deleteNote, toggleFavorite } from "./firebase";
+import EditModal from "./components/EditModal"; // Asegúrate que la ruta sea correcta
+import AddNoteModal from "./components/AddNoteModal"; // 👈 importa el nuevo componente
+import Footer from "./components/Footer";
 
-const Notes = () => {
+
+
+const Notes = ({ search, searchCategory, showFavorites }) => {
   const [notes, setNotes] = useState([]);
-  const [text, setText] = useState("");
-  const [category, setCategory] = useState("Otros")
 
   const [editNoteId, setEditNoteId] = useState(null);
   const [editText, setEditText] = useState("");
-  const [editCategory, setEditCategory] = useState ("");
- 
-  const [search, setSearch] = useState(""); // Estado para la búsqueda de texto
-
-  const [searchCategory, setSearchCategory] = useState(""); //estado para la busqueda de categoria
-  const [showFavorites, setShowFavorites] = useState(false);
+  const [editCategory, setEditCategory] = useState("");
 
 
-  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+
   useEffect(() => {
     const unsubscribe = getNotes(setNotes);
     return () => unsubscribe && unsubscribe();
   }, []);
 
-  const handleAddNote = async () => {
-    if (text.trim()) {
-        console.log("📌 Nota a agregar:", text, "🗂 Categoría seleccionada:", category); // 🔍 Verificar en consola
-      await addNote(text, category);
-      setText("");
-      setCategory("Otros");
-    }
-  };
-
-  const handleEditNote = async () => {
-    if (editText.trim() && editNoteId) {
-      await updateNote(editNoteId, editText,editCategory);
-      setEditNoteId(null);
-      setEditText("");
-      setCategory("");
-    }
-  };
-
-    // Filtrar notas según la búsqueda
-    const filteredNotes = notes
-    .filter(n =>
-      n.text.toLowerCase().includes(search.toLowerCase()) &&
-      n.category.toLowerCase().includes(searchCategory.toLowerCase())
+  const filteredNotes = notes
+    .filter((n) =>
+      n.text?.toLowerCase().includes(search.toLowerCase()) &&
+      n.category?.toLowerCase().includes(searchCategory.toLowerCase())
     )
-    .filter(n => (showFavorites ? n.isFavorite : true))// Aplica el filtro solo si está activado
+    .filter((n) => (showFavorites ? n.isFavorite : true))
     .sort((a, b) => {
-        if(b.isFavorite !== a.isFavorite) return b.isFavorite - a.isFavorite;
-    return a.text.localeCompare(b.text)
-    })
+      if (b.isFavorite !== a.isFavorite) return b.isFavorite - a.isFavorite;
+      return a.text.localeCompare(b.text);
+    });
+
   return (
-    <div>
-      <h2>📌 Tus Notas</h2>
-      <button  onClick = {() => setShowFavorites(!showFavorites)}>
-        {showFavorites ? "📄 Mostrar Toda " : "⭐ Mostrar Favoritas "}
-        </button>
+    <div className="p-4">
+      {/* Añadir nota */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+        <button
+        className="p-2 bg-blue-500 text-white rounded"
+        onClick={() => setIsAddModalOpen(true)}
+      >
+        Agregar Nota
+      </button> 
+      </div>
 
-      <select value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)}>
-        <option value="">Todas las categorías</option>
-        {categories.map(cat => (
-        <option key={cat} value={cat}>{cat}</option>
-
-        
-  ))}
-</select>
-        <label>Buscar notas de texto: </label>
-        {/* Input de búsqueda */}
-        <input 
-            type="text"
-            placeholder="Buscar nota..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-      />
-
-      {/* Input para agregar nuevas notas */}
-      <label>  Agregar nota: </label>
-      <input 
-        type="text" 
-        placeholder="Escribe una nota..."
-        value={text} 
-        onChange={(e) => setText(e.target.value)}
-      />
-      
-
-<label> Categoria: </label>
-<select 
-  value={category} 
-  onChange={(e) => {
-    setCategory(e.target.value);
-    console.log("✅ Categoría seleccionada correctamente:", e.target.value); // 🔍 Verificar en consola
-  }}
->
-  {categories.map(cat => (
-    <option key={cat} value={cat}>{cat}</option>
-    
-  ))}
-</select>
-      <button onClick={handleAddNote}>Agregar Nota</button>
-      <button onClick={() => setEditNoteId(null)}>Cancelar</button>
       {/* Lista de notas */}
-      <ul>
-        
-        {filteredNotes.map(note => (
-            <li key={note.id}>
-            <button onClick={() => toggleFavorite(note.id, note.isFavorite)}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredNotes.map((note) => (
+          <div
+            key={note.id}
+            className="bg-zinc-800 text-white p-4 rounded-lg shadow hover:shadow-xl transition"
+          >
+            <div className="flex justify-between items-start">
+              <span className="text-sm text-gray-300">
+                [{note.category || "Sin categoría"}]
+              </span>
+              <button onClick={() => toggleFavorite(note.id, note.isFavorite)}>
                 {note.isFavorite ? "⭐" : "☆"}
-            </button>
-            {editNoteId === note.id ? (
-              <>
-                <input 
-                  type="text" 
-                  value={editText} 
-                  onChange={(e) => setEditText(e.target.value)}
-                />
-                <trong> Categora:</trong>
-            <select //editar categoria
-                value={editCategory} 
-                onChange={(e) => setEditCategory(e.target.value)}
-            >
-                {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                ))}
-          </select>
-                <button onClick={handleEditNote}>Guardar</button>
-                <button onClick={() => setEditNoteId(null)}>Cancelar</button>
-              </>
-            ) : (
-              <>
-                <strong>[{note.category || "Sin categoría"}]</strong> {note.text}
-                <button onClick={() => {
+              </button>
+            </div>
+            <p className="mt-2">{note.text}</p>
+            <div className="mt-4 flex justify-between text-sm">
+              <button
+                className="bg-yellow-400 text-black px-3 py-1 rounded"
+                onClick={() => {
                   setEditNoteId(note.id);
                   setEditText(note.text);
-                  setEditCategory(note.category || "otros")
-                }}>✏️ Editar</button>
-                <button onClick={() => deleteNote(note.id)}>🗑 Eliminar</button>
-              </>
-            )}
-          </li>
+                  setEditCategory(note.category);
+                  setIsEditModalOpen(true);
+                }}
+              >
+                ✏️ Editar
+              </button>
+              <button
+                className="bg-red-500 px-3 py-1 rounded"
+                onClick={() => deleteNote(note.id)}
+              >
+                🗑 Eliminar
+              </button>
+            </div>
+          </div>
         ))}
-    
+      </div>
 
-      </ul>
-
-
+      {/* Modal de edición */}
+      {isEditModalOpen && (
+        <EditModal
+          text={editText} 
+          note={{ text: editText, category: editCategory }}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={async (updatedText, updatedCategory) => {
+            await updateNote(editNoteId, updatedText, updatedCategory);
+            setIsEditModalOpen(false);
+          }}
+        />
+      )}
+            {isAddModalOpen && (
+  <AddNoteModal onClose={() => setIsAddModalOpen(false)} />
+)}
+      <Footer />
     </div>
   );
 };
